@@ -2028,7 +2028,7 @@
                 const bookingCode = `RT-${randomDigits}`;
 
                 const appliedPromos = [];
-                if (calc.hasTimePromo) appliedPromos.push('Đặt >= 3h (-10%)');
+                if (calc.hasTimePromo) appliedPromos.push('Đặt từ 3h trở lên giảm 10%');
                 if (calc.hasRoomComboPromo) appliedPromos.push(calc.roomComboLabel);
 
                 // Chuẩn bị dữ liệu gửi về Google Sheets
