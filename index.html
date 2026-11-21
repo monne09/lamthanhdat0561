@@ -216,7 +216,7 @@
             <div class="flex flex-wrap items-center justify-center gap-2.5 mb-10" id="space-filters">
                 <button type="button" onclick="filterSpaces('all')" data-filter="all"
                     class="filter-btn active px-5 py-2.5 rounded-full text-sm font-semibold transition-all bg-brand-brown text-white shadow-sm">
-                    Tất cả (8)
+                    Tất cả (9)
                 </button>
                 <button type="button" onclick="filterSpaces('sleepbox')" data-filter="sleepbox"
                     class="filter-btn px-5 py-2.5 rounded-full text-sm font-semibold transition-all bg-white text-brand-navy border border-brand-sand hover:border-brand-brown">
@@ -250,6 +250,10 @@
                     class="filter-btn px-5 py-2.5 rounded-full text-sm font-semibold transition-all bg-white text-brand-navy border border-brand-sand hover:border-brand-brown">
                     Phòng chung Gối lười
                 </button>
+                <button type="button" onclick="filterSpaces('bida')" data-filter="bida"
+                 class="filter-btn px-5 py-2.5 rounded-full text-sm font-semibold transition-all bg-white text-brand-navy border border-brand-sand hover:border-brand-brown">
+                 Khu vực Bida
+             </button>
             </div>
 
             <!-- Lưới hiển thị các loại hình Box (Render bằng JS để đồng bộ dữ liệu đặt phòng) -->
@@ -1394,7 +1398,7 @@
                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                         <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-                        <span class="absolute top-4 left-4 ${space.isWalkInFree ? 'bg-emerald-600 text-white' : 'bg-white/95 text-brand-navy'} backdrop-blur-xs text-xs font-bold px-3.5 py-1.5 rounded-full shadow-sm">
+                        <span class="absolute top-4 left-4 ${(space.isWalkInFree || space.isWalkInOnly) ? 'bg-emerald-600 text-white' : 'bg-white/95 text-brand-navy'} backdrop-blur-xs text-xs font-bold px-3.5 py-1.5 rounded-full shadow-sm">
                             ${space.badge}
                         </span>
                         <div class="absolute bottom-4 left-4 right-4 flex items-end justify-between text-white">
@@ -1409,7 +1413,7 @@
                                 </div>
                             ` : `
                                 <div class="text-right">
-                                    <span class="text-xs opacity-90 block">Chỉ từ</span>
+                                    <span class="text-xs opacity-90 block">${space.isWalkInOnly ? 'Không cần đặt trước' : 'Chỉ từ'}</span>
                                     <span class="text-lg font-extrabold">${formatVND(space.pricePerHour)}<span class="text-xs font-normal">/giờ</span></span>
                                 </div>
                             `}
@@ -1445,12 +1449,17 @@
                                     class="flex-1 text-center py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors">
                                     Vào trực tiếp • Menu
                                 </a>
+                            ` : (space.isWalkInOnly ? `
+                                <a href="#branches" onclick="showToast('Khu vực Bida giá 59.000đ/giờ không cần đặt chỗ trước — mời bạn ghé trực tiếp chi nhánh để chơi ngay!')"
+                                    class="flex-1 text-center py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors">
+                                    Chơi trực tiếp • Chi nhánh
+                                </a>
                             ` : `
                                 <button type="button" onclick="openBookingModal('${space.id}')"
                                     class="flex-1 py-2.5 px-4 rounded-xl bg-brand-brown hover:bg-brand-brownDark text-white text-sm font-semibold shadow-sm transition-colors">
                                     Đặt box này
                                 </button>
-                            `}
+                            `)}
                         </div>
                     </div>
                 </article>
@@ -1599,6 +1608,15 @@
                     if (menuSection) menuSection.scrollIntoView({ behavior: 'smooth' });
                     showToast('Phòng Chung Gối Lười hoàn toàn miễn phí và không giới hạn thời gian — chỉ cần ghé quán mua nước nhé!');
                 };
+            } else if (space.isWalkInOnly) {
+                bookBtn.textContent = 'Không cần đặt trước • Xem chi nhánh';
+                bookBtn.className = 'w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 rounded-2xl shadow-md transition-colors';
+                bookBtn.onclick = () => {
+                    closeDetailModal();
+                    const branchesSection = document.getElementById('branches');
+                    if (branchesSection) branchesSection.scrollIntoView({ behavior: 'smooth' });
+                    showToast('Khu vực Bida giá 59.000đ/giờ phục vụ chơi trực tiếp không cần đặt chỗ trước!');
+                };
             } else {
                 bookBtn.textContent = 'Đặt không gian này ngay';
                 bookBtn.className = 'w-full bg-brand-brown hover:bg-brand-brownDark text-white font-semibold py-3.5 rounded-2xl shadow-md transition-colors';
@@ -1607,7 +1625,6 @@
                     openBookingModal(space.id);
                 };
             }
-
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             document.body.style.overflow = 'hidden';
@@ -1628,7 +1645,8 @@
             if (!container) return;
 
             // Chỉ hiển thị các phòng cần đặt trước (không đưa Phòng Chung Gối Lười miễn phí vào form đặt phòng)
-            const bookableSpaces = BOX_SPACES.filter(space => !space.isWalkInFree);
+            const bookableSpaces = BOX_SPACES.filter(space => !space.isWalkInFree && !space.isWalkInOnly);
+
 
             container.innerHTML = bookableSpaces.map(space => {
                 const isSelected = space.id === selectedBoxId;
@@ -1976,7 +1994,7 @@
 
         function openBookingModal(preselectedBoxId = null, preselectedBranch = null, keepCart = false, preselectedDuration = null) {
             if (preselectedBoxId) {
-                const targetSpace = BOX_SPACES.find(s => s.id === preselectedBoxId && !s.isWalkInFree);
+                const targetSpace = BOX_SPACES.find(s => s.id === preselectedBoxId && !s.isWalkInFree && !s.isWalkInOnly);
                 if (targetSpace) {
                     selectedBoxId = targetSpace.id;
                 }
